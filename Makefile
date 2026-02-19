@@ -10,6 +10,13 @@ SRC := reverse.c
 PREFIX ?= /usr
 BINDIR ?= $(PREFIX)/bin
 
+PKG_NAME ?= $(TARGET)
+PKG_VERSION ?= 1.0.0
+PKG_ARCH ?= $(shell dpkg --print-architecture 2>/dev/null || echo amd64)
+PKG_MAINTAINER ?= Valeriy Sofin <valeriysofin@local>
+PKG_DIR := build/$(PKG_NAME)_$(PKG_VERSION)_$(PKG_ARCH)
+PKG_FILE := dist/$(PKG_NAME)_$(PKG_VERSION)_$(PKG_ARCH).deb
+
 .PHONY: all clean run install deb check-toolchain
 
 all: check-toolchain $(TARGET)
@@ -35,12 +42,24 @@ install: $(TARGET)
 	install -d "$(DESTDIR)$(BINDIR)"
 	install -m 0755 "$(TARGET)" "$(DESTDIR)$(BINDIR)/$(TARGET)"
 
-deb:
-	@command -v dpkg-buildpackage >/dev/null 2>&1 || { \
-		echo "Error: dpkg-buildpackage not found. Install dpkg-dev, debhelper, devscripts."; \
+deb: all
+	@command -v apt >/dev/null 2>&1 || { \
+		echo "Error: apt not found. Run this target on Debian/Ubuntu."; \
 		exit 1; \
 	}
-	dpkg-buildpackage -us -uc -b
+	sudo apt update && sudo apt install -y build-essential dpkg-dev
+	@command -v dpkg-deb >/dev/null 2>&1 || { \
+		echo "Error: dpkg-deb not found. Build on Debian/Ubuntu and install dpkg-dev."; \
+		exit 1; \
+	}
+	rm -rf "$(PKG_DIR)"
+	install -d "$(PKG_DIR)/DEBIAN" "$(PKG_DIR)/usr/bin" "dist"
+	install -m 0755 "$(TARGET)" "$(PKG_DIR)/usr/bin/$(TARGET)"
+	@printf "Package: $(PKG_NAME)\nVersion: $(PKG_VERSION)\nSection: utils\nPriority: optional\nArchitecture: $(PKG_ARCH)\nDepends: libc6\nMaintainer: $(PKG_MAINTAINER)\nDescription: 7x7 matrix task executable\n Random 7x7 matrix analyzer that zeroes the matrix when counts match.\n" > "$(PKG_DIR)/DEBIAN/control"
+	dpkg-deb --build --root-owner-group "$(PKG_DIR)" "$(PKG_FILE)"
+	@echo "Created $(PKG_FILE)"
+	sudo apt install "./$(PKG_FILE)"
 
 clean:
 	rm -f "$(TARGET)"
+	rm -rf "build" "dist"
