@@ -1,0 +1,5 @@
+reverse
+out/
+build/
+dist/
+*.deb

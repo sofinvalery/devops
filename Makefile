@@ -17,7 +17,7 @@ PKG_MAINTAINER ?= Valeriy Sofin <valeriysofin@local>
 PKG_DIR := build/$(PKG_NAME)_$(PKG_VERSION)_$(PKG_ARCH)
 PKG_FILE := dist/$(PKG_NAME)_$(PKG_VERSION)_$(PKG_ARCH).deb
 
-.PHONY: all clean run install deb check-toolchain
+.PHONY: all clean run install deb deb-build check-toolchain
 
 all: check-toolchain $(TARGET)
 
@@ -42,12 +42,7 @@ install: $(TARGET)
 	install -d "$(DESTDIR)$(BINDIR)"
 	install -m 0755 "$(TARGET)" "$(DESTDIR)$(BINDIR)/$(TARGET)"
 
-deb: all
-	@command -v apt >/dev/null 2>&1 || { \
-		echo "Error: apt not found. Run this target on Debian/Ubuntu."; \
-		exit 1; \
-	}
-	sudo apt update && sudo apt install -y build-essential dpkg-dev
+deb-build: all
 	@command -v dpkg-deb >/dev/null 2>&1 || { \
 		echo "Error: dpkg-deb not found. Build on Debian/Ubuntu and install dpkg-dev."; \
 		exit 1; \
@@ -58,6 +53,14 @@ deb: all
 	@printf "Package: $(PKG_NAME)\nVersion: $(PKG_VERSION)\nSection: utils\nPriority: optional\nArchitecture: $(PKG_ARCH)\nDepends: libc6\nMaintainer: $(PKG_MAINTAINER)\nDescription: 7x7 matrix task executable\n Random 7x7 matrix analyzer that zeroes the matrix when counts match.\n" > "$(PKG_DIR)/DEBIAN/control"
 	dpkg-deb --build --root-owner-group "$(PKG_DIR)" "$(PKG_FILE)"
 	@echo "Created $(PKG_FILE)"
+
+deb:
+	@command -v apt >/dev/null 2>&1 || { \
+		echo "Error: apt not found. Run this target on Debian/Ubuntu."; \
+		exit 1; \
+	}
+	sudo apt update && sudo apt install -y build-essential dpkg-dev
+	$(MAKE) deb-build
 	sudo apt install "./$(PKG_FILE)"
 
 clean:
