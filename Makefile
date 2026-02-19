@@ -5,7 +5,7 @@ CFLAGS ?= -std=c11 -O2 -Wall -Wextra -pedantic
 LDFLAGS ?=
 
 TARGET := reverse
-SRC := reverse.c
+SRC := matrix.c
 
 PREFIX ?= /usr
 BINDIR ?= $(PREFIX)/bin
