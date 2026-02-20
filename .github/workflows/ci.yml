@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Checkout
@@ -54,7 +54,7 @@ jobs:
 
   package:
     name: Package
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test
     steps:
       - name: Checkout
@@ -76,7 +76,7 @@ jobs:
 
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: package
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
