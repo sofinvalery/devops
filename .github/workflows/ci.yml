@@ -104,24 +104,23 @@ jobs:
           grep -Eq '^Zeros above main diagonal: [0-9]+$' container.out
           grep -Eq '^Positive below secondary diagonal: [0-9]+$' container.out
 
-      - name: Log in to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/v') && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Push image to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/v') && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+      - name: Publish image to Docker Hub (tag builds only)
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           VERSION_TAG: ${{ github.ref_name }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
+          if [ -z "${DOCKERHUB_USERNAME}" ] || [ -z "${DOCKERHUB_TOKEN}" ]; then
+            echo "DOCKERHUB_USERNAME/DOCKERHUB_TOKEN are not set. Skipping Docker Hub push."
+            exit 0
+          fi
+          echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
           docker tag reverse:ci "${IMAGE_NAME}:${VERSION_TAG}"
           docker tag reverse:ci "${IMAGE_NAME}:latest"
           docker push "${IMAGE_NAME}:${VERSION_TAG}"
           docker push "${IMAGE_NAME}:latest"
-
-      - name: Docker Hub push skipped
-        if: startsWith(github.ref, 'refs/tags/v') && (secrets.DOCKERHUB_USERNAME == '' || secrets.DOCKERHUB_TOKEN == '')
-        run: echo "DOCKERHUB_USERNAME/DOCKERHUB_TOKEN are not set. Skipping Docker Hub push."
 
   release:
     name: Release
