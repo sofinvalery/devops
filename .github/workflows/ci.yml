@@ -11,6 +11,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  IMAGE_NAME: sofinvalery/devops
+
 jobs:
   build:
     name: Build
@@ -74,10 +77,56 @@ jobs:
           name: reverse-deb
           path: dist/*.deb
 
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    needs: package
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download .deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: reverse-deb
+          path: dist
+
+      - name: Build Docker image from .deb
+        run: |
+          set -euo pipefail
+          ls -la dist
+          docker build -t reverse:ci .
+
+      - name: Run container and validate output
+        run: |
+          set -euo pipefail
+          docker run --rm reverse:ci | tee container.out
+          grep -Eq '^Zeros above main diagonal: [0-9]+$' container.out
+          grep -Eq '^Positive below secondary diagonal: [0-9]+$' container.out
+
+      - name: Log in to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v') && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push image to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v') && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+        env:
+          VERSION_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          docker tag reverse:ci "${IMAGE_NAME}:${VERSION_TAG}"
+          docker tag reverse:ci "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:${VERSION_TAG}"
+          docker push "${IMAGE_NAME}:latest"
+
+      - name: Docker Hub push skipped
+        if: startsWith(github.ref, 'refs/tags/v') && (secrets.DOCKERHUB_USERNAME == '' || secrets.DOCKERHUB_TOKEN == '')
+        run: echo "DOCKERHUB_USERNAME/DOCKERHUB_TOKEN are not set. Skipping Docker Hub push."
+
   release:
     name: Release
     runs-on: self-hosted
-    needs: package
+    needs: deploy
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
