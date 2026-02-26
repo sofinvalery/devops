@@ -1,12 +1,8 @@
-# devops
+## Program
 
-DevOps project: build + packaging (`.deb`), CI/CD, Docker image publishing, Kubernetes deployment with Helm, Prometheus/Grafana monitoring, and HPA autoscaling.
-
-## What the program does
-
-The core algorithm processes a 7x7 matrix:
-1. Counts zeros above the main diagonal.
-2. Counts positive values below the secondary diagonal.
+Algorithm processes a 7x7 matrix:
+1. Counts zeros above the main diagonal
+2. Counts positive values below the secondary diagonal
 3. If counts are equal, zeroes the matrix.
 
 Runtime modes:
@@ -15,11 +11,11 @@ Runtime modes:
    - `/healthz`
    - `/metrics` (Prometheus format)
 
-## Labs coverage
+## Assignments
 
 1. Assignment 1 (build/distribution/dependencies)
 - `matrix.c`
-- `Makefile` build flow
+- `Makefile` 
 - `.deb` packaging (`make deb-build`, `ci/package.sh`)
 
 2. Assignment 2 (CI/CD)
@@ -32,7 +28,7 @@ Runtime modes:
 - pipeline image build check
 - Docker Hub push on tags `v*`
 
-4. Assignment 4 (Kubernetes + monitoring)
+4. Assignment 4 (Kubernetes + monitoring + HPA)
 - Helm chart: `helm/reverse`
 - K8s resources: Deployment/Service/ServiceMonitor/HPA
 - Prometheus+Grafana install script
@@ -205,9 +201,9 @@ Dashboard:
 - source file: `ops/grafana/reverse-dashboard.json`
 
 If dashboard is empty:
-1. Set time range to `Last 1 hour`.
+1. Set time range to last 1 hour.
 2. Refresh.
-3. Confirm Prometheus target is `UP`.
+3. Confirm Prometheus target is up.
 
 ## HPA verification
 
