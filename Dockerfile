@@ -12,4 +12,6 @@ RUN set -eux; \
     dpkg -i "${deb_file}" || apt-get install -y -f; \
     rm -rf /var/lib/apt/lists/* /tmp/*.deb
 
+EXPOSE 8080
+
 ENTRYPOINT ["/usr/bin/reverse"]

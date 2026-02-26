@@ -1,5 +1,6 @@
-reverse
+/reverse
 out/
 build/
 dist/
 *.deb
+.DS_Store
